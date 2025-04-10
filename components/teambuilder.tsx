@@ -15,6 +15,10 @@ import {
 import { cn } from "@/lib/utils";
 
 import Image from "next/image";
+import Team from "./team";
+
+import { v4 as uuidv4 } from "uuid";
+import TypeBadge from "./typeBadge";
 
 type Pokemon = {
   id: number;
@@ -28,18 +32,17 @@ type PokemonProps = {
 };
 
 const Teambuilder = ({ pokemon }: PokemonProps) => {
-  const [links, setLinks] = React.useState<[Pokemon, Pokemon][]>([]);
+  const [links, setLinks] = React.useState<[string, Pokemon, Pokemon][]>([]);
 
-  const [myTeam, setMyTeam] = React.useState<Pokemon[]>([]);
-  const [friendTeam, setFriendTeam] = React.useState<Pokemon[]>([]);
+  const [currentTeam, setCurrentTeam] = React.useState<
+    [string, Pokemon, Pokemon][]
+  >([]);
 
   useEffect(() => {
     const savedLinks = JSON.parse(localStorage.getItem("allLinks") || "[]");
-    const myteam = JSON.parse(localStorage.getItem("myTeam") || "[]");
-    const friendteam = JSON.parse(localStorage.getItem("friendTeam") || "[]");
+    const team = JSON.parse(localStorage.getItem("currentTeam") || "[]");
     setLinks(savedLinks);
-    setMyTeam(myteam);
-    setFriendTeam(friendteam);
+    setCurrentTeam(team);
   }, []);
 
   useEffect(() => {
@@ -49,9 +52,8 @@ const Teambuilder = ({ pokemon }: PokemonProps) => {
   }, [links]);
 
   useEffect(() => {
-    localStorage.setItem("myTeam", JSON.stringify(myTeam));
-    localStorage.setItem("friendTeam", JSON.stringify(friendTeam));
-  }, [myTeam, friendTeam]);
+    localStorage.setItem("currentTeam", JSON.stringify(currentTeam));
+  }, [currentTeam]);
 
   const [open, setOpen] = React.useState(false);
   const [value, setValue] = React.useState<Pokemon | null>(null);
@@ -61,59 +63,43 @@ const Teambuilder = ({ pokemon }: PokemonProps) => {
 
   function addLink() {
     if (value && value2) {
-      setLinks((prevLinks) => [...prevLinks, [value, value2]]);
+      const newLink: [string, Pokemon, Pokemon] = [uuidv4(), value, value2];
+      setLinks((prevLinks) => [...prevLinks, newLink]);
       setValue(null);
       setValue2(null);
     }
   }
 
-  function deleteLink(link: [Pokemon, Pokemon]) {
-    const newLinks = links.filter((l) => l[0] != link[0] && l[1] != link[1]);
+  function deleteLink(link: [string, Pokemon, Pokemon]) {
+    const newLinks = links.filter((l) => l != link);
     setLinks(newLinks);
     removeLinkFromTeam(link);
   }
 
-  function addLinkToTeam(link: [Pokemon, Pokemon]): void {
-    const myPokemon = link[0];
-    const friendPokemon = link[1];
-
-    if (
-      myTeam.some((p) => p.id === myPokemon.id) ||
-      friendTeam.some((p) => p.id === friendPokemon.id)
-    ) {
+  function addLinkToTeam(link: [string, Pokemon, Pokemon]): void {
+    if (currentTeam.some((l) => l === link)) {
       return;
     }
 
-    setMyTeam((prevTeam) => {
+    setCurrentTeam((prevTeam) => {
       if (prevTeam.length >= 6) {
         return prevTeam;
       }
 
-      return [...prevTeam, myPokemon];
-    });
-
-    setFriendTeam((prevTeam) => {
-      if (prevTeam.length >= 6) {
-        return prevTeam;
-      }
-
-      return [...prevTeam, friendPokemon];
+      return [...prevTeam, link];
     });
   }
 
-  function removeLinkFromTeam(link: [Pokemon, Pokemon]): void {
-    const myNewTeam = myTeam.filter((p) => p.id != link[0].id);
-    setMyTeam(myNewTeam);
-
-    const FriendNewTeam = friendTeam.filter((p) => p.id != link[1].id);
-    setFriendTeam(FriendNewTeam);
+  function removeLinkFromTeam(link: [string, Pokemon, Pokemon]): void {
+    const myNewTeam = currentTeam.filter((l) => l[0] !== link[0]);
+    setCurrentTeam(myNewTeam);
   }
 
   return (
     <div className="flex flex-col gap-16">
       <div className="flex flex-row justify-between gap-4">
         <div className="flex flex-col gap-2">
-          <p>Create Soullink</p>
+          <p>Create Link</p>
           <div className="flex flex-row gap-2">
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
@@ -224,11 +210,20 @@ const Teambuilder = ({ pokemon }: PokemonProps) => {
             </Popover>
             <Button onClick={addLink}>Add link</Button>
           </div>
+          <p className="mt-20">Current Primary Types In Teams</p>
+          <div className="grid grid-cols-4 gap-2">
+            {currentTeam.map((p, i) => (
+              <TypeBadge key={i} type={p[1].types[0]} />
+            ))}
+            {currentTeam.map((p, i) => (
+              <TypeBadge key={i} type={p[2].types[0]} />
+            ))}
+          </div>
         </div>
 
         <div className="flex flex-col gap-2 w-1/2">
           <p>Soullink Box</p>
-          <div className="flex flex-col gap-2 h-[400px] bg-card rounded-3xl w-full overflow-auto no-scrollbar p-2">
+          <div className="flex flex-col gap-2 h-[300px] bg-card rounded-3xl w-full overflow-auto no-scrollbar p-2">
             {links.map((link, i) => (
               <div
                 key={i}
@@ -236,21 +231,21 @@ const Teambuilder = ({ pokemon }: PokemonProps) => {
               >
                 <div className="flex flex-row gap-1 items-center">
                   <Image
-                    src={link[0].sprite}
-                    alt="First Pokemon"
-                    width={100}
-                    height={100}
-                  />
-                  <p>{link[0].name}</p>
-                  <p className="text-slate-500">{link[0].types.join("/")}</p>
-                  <Image
                     src={link[1].sprite}
-                    alt="Second Pokemon"
+                    alt="First Pokemon"
                     width={100}
                     height={100}
                   />
                   <p>{link[1].name}</p>
                   <p className="text-slate-500">{link[1].types.join("/")}</p>
+                  <Image
+                    src={link[2].sprite}
+                    alt="Second Pokemon"
+                    width={100}
+                    height={100}
+                  />
+                  <p>{link[2].name}</p>
+                  <p className="text-slate-500">{link[2].types.join("/")}</p>
                 </div>
                 <div className="flex flex-row gap-2">
                   <Button
@@ -260,8 +255,7 @@ const Teambuilder = ({ pokemon }: PokemonProps) => {
                   >
                     Delete Link
                   </Button>
-                  {myTeam.some((p) => p.id === link[0].id) &&
-                  friendTeam.some((p) => p.id === link[1].id) ? (
+                  {currentTeam.some((l) => l[0] === link[0]) ? (
                     <Button
                       className="w-fit"
                       variant={"default"}
@@ -285,54 +279,14 @@ const Teambuilder = ({ pokemon }: PokemonProps) => {
         </div>
       </div>
 
-      <div className="flex flex-row justify-between gap-4">
-        <div className="flex flex-row gap-2">
-          {Array.from({ length: 6 }).map((_, index) =>
-            myTeam[index] ? (
-              <div
-                key={index}
-                className="w-fit h-fit ring-1 ring-foreground p-2 rounded-2xl"
-              >
-                <Image
-                  src={myTeam[index].sprite}
-                  alt="Team Pokemon"
-                  width={100}
-                  height={100}
-                />
-              </div>
-            ) : (
-              <div
-                key={index}
-                className="w-fit h-fit ring-1 ring-foreground p-2 rounded-2xl"
-              >
-                <p>empty</p>
-              </div>
-            )
-          )}
+      <div className="flex flex-row w-full justify-between gap-4">
+        <div className="flex flex-col w-full gap-2">
+          <p>My Team</p>
+          <Team team={currentTeam} user={1} />
         </div>
-        <div className="flex flex-row gap-2">
-          {Array.from({ length: 6 }).map((_, index) =>
-            friendTeam[index] ? (
-              <div
-                key={index}
-                className="w-fit h-fit ring-1 ring-foreground p-2 rounded-2xl"
-              >
-                <Image
-                  src={friendTeam[index].sprite}
-                  alt="Friend Team pokemon"
-                  width={100}
-                  height={100}
-                />
-              </div>
-            ) : (
-              <div
-                key={index}
-                className="w-fit h-fit ring-1 ring-foreground p-2 rounded-2xl"
-              >
-                <p>empty</p>
-              </div>
-            )
-          )}
+        <div className="flex flex-col w-full gap-2">
+          <p>Friends Team</p>
+          <Team team={currentTeam} user={2} />
         </div>
       </div>
     </div>
