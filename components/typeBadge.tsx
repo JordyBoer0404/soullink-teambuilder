@@ -1,6 +1,6 @@
 import React from "react";
 
-const typeBadge = (props: { type: string }) => {
+const TypeBadge = (props: { type: string }) => {
   const getTypeColor = (type: string) => {
     switch (type.toLowerCase()) {
       case "normal":
@@ -20,7 +20,7 @@ const typeBadge = (props: { type: string }) => {
       case "dark":
         return "bg-dark border-card/50 text-white";
       case "fairy":
-        return "bg-fairy border-card/50 text-black";
+        return "bg-fairy border-card/50 text-white";
       case "dragon":
         return "bg-dragon border-card/50 text-white";
       case "rock":
@@ -55,4 +55,4 @@ const typeBadge = (props: { type: string }) => {
   );
 };
 
-export default typeBadge;
+export default TypeBadge;

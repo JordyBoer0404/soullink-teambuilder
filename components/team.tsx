@@ -13,9 +13,9 @@ type TeamProps = {
   user: number;
 };
 
-const team = ({ team, user }: TeamProps) => {
+const Team = ({ team, user }: TeamProps) => {
   return (
-    <div className="w-full grid grid-cols-3 gap-2">
+    <div className="w-full grid grid-cols-2 md:grid-cols-3 gap-2">
       {Array.from({ length: 6 }).map((_, index) =>
         team[index] ? (
           <TeamSlot
@@ -31,4 +31,4 @@ const team = ({ team, user }: TeamProps) => {
   );
 };
 
-export default team;
+export default Team;

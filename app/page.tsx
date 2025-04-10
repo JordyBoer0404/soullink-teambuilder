@@ -6,7 +6,7 @@ import Loading from "@/components/loading";
 
 export default function Home() {
   return (
-    <main className="flex flex-col justify-between lg:h-screen mx-auto lg:w-2/3">
+    <main className="flex flex-col justify-between px-4 lg:px-0 lg:h-screen mx-auto lg:w-2/3">
       <Header />
       <Suspense fallback={<Loading />}>
         <Content />

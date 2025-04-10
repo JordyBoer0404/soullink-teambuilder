@@ -14,7 +14,7 @@ type TeamSlotProps = {
   index: number;
 };
 
-const teamSlot = ({ pokemon, index }: TeamSlotProps) => {
+const TeamSlot = ({ pokemon, index }: TeamSlotProps) => {
   return (
     <div className="w-full h-25 ring-2 ring-foreground rounded-2xl">
       {pokemon ? (
@@ -43,4 +43,4 @@ const teamSlot = ({ pokemon, index }: TeamSlotProps) => {
   );
 };
 
-export default teamSlot;
+export default TeamSlot;
