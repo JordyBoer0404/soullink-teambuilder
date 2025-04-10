@@ -15,6 +15,10 @@ import {
 import { cn } from "@/lib/utils";
 
 import Image from "next/image";
+import Team from "./team";
+
+import { v4 as uuidv4 } from "uuid";
+import TypeBadge from "./typeBadge";
 
 type Pokemon = {
   id: number;
@@ -28,11 +32,19 @@ type PokemonProps = {
 };
 
 const Teambuilder = ({ pokemon }: PokemonProps) => {
-  const [links, setLinks] = React.useState<[Pokemon, Pokemon][]>([]);
+  const [links, setLinks] = React.useState<[string, Pokemon, Pokemon][]>([]);
+
+  const [currentTeam, setCurrentTeam] = React.useState<
+    [string, Pokemon, Pokemon][]
+  >([]);
+
+  const duplicateTypes = getDuplicatePrimaryTypes(currentTeam);
 
   useEffect(() => {
     const savedLinks = JSON.parse(localStorage.getItem("allLinks") || "[]");
+    const team = JSON.parse(localStorage.getItem("currentTeam") || "[]");
     setLinks(savedLinks);
+    setCurrentTeam(team);
   }, []);
 
   useEffect(() => {
@@ -40,6 +52,10 @@ const Teambuilder = ({ pokemon }: PokemonProps) => {
       localStorage.setItem("allLinks", JSON.stringify(links));
     }
   }, [links]);
+
+  useEffect(() => {
+    localStorage.setItem("currentTeam", JSON.stringify(currentTeam));
+  }, [currentTeam]);
 
   const [open, setOpen] = React.useState(false);
   const [value, setValue] = React.useState<Pokemon | null>(null);
@@ -49,167 +65,260 @@ const Teambuilder = ({ pokemon }: PokemonProps) => {
 
   function addLink() {
     if (value && value2) {
-      setLinks((prevLinks) => [...prevLinks, [value, value2]]);
+      const newLink: [string, Pokemon, Pokemon] = [uuidv4(), value, value2];
+      setLinks((prevLinks) => [...prevLinks, newLink]);
       setValue(null);
       setValue2(null);
     }
   }
 
-  function deleteLink(link: [Pokemon, Pokemon]) {
-    const newLinks = links.filter((l) => l[0] != link[0] && l[1] != link[1]);
+  function deleteLink(link: [string, Pokemon, Pokemon]) {
+    const newLinks = links.filter((l) => l != link);
     setLinks(newLinks);
+    removeLinkFromTeam(link);
+  }
+
+  function addLinkToTeam(link: [string, Pokemon, Pokemon]): void {
+    if (currentTeam.some((l) => l === link)) {
+      return;
+    }
+
+    setCurrentTeam((prevTeam) => {
+      if (prevTeam.length >= 6) {
+        return prevTeam;
+      }
+
+      return [...prevTeam, link];
+    });
+  }
+
+  function removeLinkFromTeam(link: [string, Pokemon, Pokemon]): void {
+    const myNewTeam = currentTeam.filter((l) => l[0] !== link[0]);
+    setCurrentTeam(myNewTeam);
+  }
+
+  function getDuplicatePrimaryTypes(team: [string, Pokemon, Pokemon][]) {
+    const primaryTypes = team.flatMap(([, p1, p2]) => [
+      p1.types[0],
+      p2.types[0],
+    ]);
+
+    const count: Record<string, number> = {};
+
+    for (const type of primaryTypes) {
+      count[type] = (count[type] || 0) + 1;
+    }
+
+    const duplicates = Object.entries(count)
+      .filter(([, num]) => num > 1)
+      .map(([type]) => type);
+
+    return duplicates;
   }
 
   return (
-    <div className="flex flex-col">
-      <div className="flex flex-row justify-between gap-4">
-        <div className="flex flex-col gap-2">
-          <p>Create Soullink</p>
-          <div className="flex flex-row gap-2">
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={open}
-                  className="w-[200px] justify-between"
-                >
-                  {value
-                    ? pokemon.find((p) => p.name === value.name)?.name
-                    : "Select your pokemon..."}
-                  <ChevronsUpDown className="opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[200px] p-0">
-                <Command>
-                  <CommandInput
-                    placeholder="Search pokemon..."
-                    className="h-9"
-                  />
-                  <CommandList>
-                    <CommandEmpty>No pokemon found.</CommandEmpty>
-                    <CommandGroup>
-                      {pokemon.map((p) => (
-                        <CommandItem
-                          key={p.id}
-                          value={p.name}
-                          onSelect={(currentValue) => {
-                            const selectedPokemon = pokemon.find(
-                              (p) => p.name === currentValue
-                            );
-                            if (selectedPokemon) {
-                              setValue(selectedPokemon);
-                            }
-                            setOpen(false);
-                          }}
-                        >
-                          {p.name}
-                          <Check
-                            className={cn(
-                              "ml-auto",
-                              value?.name === p.name
-                                ? "opacity-100"
-                                : "opacity-0"
-                            )}
-                          />
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+    <div className="flex flex-col gap-16">
+      <div className="flex flex-col lg:flex-row justify-between gap-4">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <p>Create Link</p>
+            <div className="flex flex-col md:flex-row gap-2">
+              <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open}
+                    className="w-[200px] justify-between"
+                  >
+                    {value
+                      ? pokemon.find((p) => p.name === value.name)?.name
+                      : "Select your pokemon..."}
+                    <ChevronsUpDown className="opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[200px] p-0">
+                  <Command>
+                    <CommandInput
+                      placeholder="Search pokemon..."
+                      className="h-9"
+                    />
+                    <CommandList>
+                      <CommandEmpty>No pokemon found.</CommandEmpty>
+                      <CommandGroup>
+                        {pokemon.map((p) => (
+                          <CommandItem
+                            key={p.id}
+                            value={p.name}
+                            onSelect={(currentValue) => {
+                              const selectedPokemon = pokemon.find(
+                                (p) => p.name === currentValue
+                              );
+                              if (selectedPokemon) {
+                                setValue(selectedPokemon);
+                              }
+                              setOpen(false);
+                            }}
+                          >
+                            {p.name}
+                            <Check
+                              className={cn(
+                                "ml-auto",
+                                value?.name === p.name
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
 
-            <Popover open={open2} onOpenChange={setOpen2}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={open2}
-                  className="w-[200px] justify-between"
-                >
-                  {value2
-                    ? pokemon.find((p) => p.name === value2.name)?.name
-                    : "Select friends pokemon..."}
-                  <ChevronsUpDown className="opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[200px] p-0">
-                <Command>
-                  <CommandInput
-                    placeholder="Search pokemon..."
-                    className="h-9"
-                  />
-                  <CommandList>
-                    <CommandEmpty>No pokemon found.</CommandEmpty>
-                    <CommandGroup>
-                      {pokemon.map((p) => (
-                        <CommandItem
-                          key={p.id}
-                          value={p.name}
-                          onSelect={(currentValue) => {
-                            const selectedPokemon = pokemon.find(
-                              (p) => p.name === currentValue
-                            );
-                            if (selectedPokemon) {
-                              setValue2(selectedPokemon);
-                            }
-                            setOpen2(false);
-                          }}
-                        >
-                          {p.name}
-                          <Check
-                            className={cn(
-                              "ml-auto",
-                              value2?.name === p.name
-                                ? "opacity-100"
-                                : "opacity-0"
-                            )}
-                          />
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-            <Button onClick={addLink}>Add link</Button>
+              <Popover open={open2} onOpenChange={setOpen2}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open2}
+                    className="w-[200px] justify-between"
+                  >
+                    {value2
+                      ? pokemon.find((p) => p.name === value2.name)?.name
+                      : "Select friends pokemon..."}
+                    <ChevronsUpDown className="opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[200px] p-0">
+                  <Command>
+                    <CommandInput
+                      placeholder="Search pokemon..."
+                      className="h-9"
+                    />
+                    <CommandList>
+                      <CommandEmpty>No pokemon found.</CommandEmpty>
+                      <CommandGroup>
+                        {pokemon.map((p) => (
+                          <CommandItem
+                            key={p.id}
+                            value={p.name}
+                            onSelect={(currentValue) => {
+                              const selectedPokemon = pokemon.find(
+                                (p) => p.name === currentValue
+                              );
+                              if (selectedPokemon) {
+                                setValue2(selectedPokemon);
+                              }
+                              setOpen2(false);
+                            }}
+                          >
+                            {p.name}
+                            <Check
+                              className={cn(
+                                "ml-auto",
+                                value2?.name === p.name
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <Button onClick={addLink} className="w-fit">
+                Add link
+              </Button>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <p>Current Primary Types In Teams</p>
+            <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+              {currentTeam.map((p, i) => (
+                <TypeBadge key={i} type={p[1].types[0]} />
+              ))}
+              {currentTeam.map((p, i) => (
+                <TypeBadge key={i} type={p[2].types[0]} />
+              ))}
+            </div>
+            {duplicateTypes.length > 0 && (
+              <p className="text-red-500">
+                Duplicate primary types in team: {duplicateTypes.join(" / ")}
+              </p>
+            )}
           </div>
         </div>
 
-        <div className="flex flex-col gap-2 h-[400px] bg-slate-800 rounded-3xl w-[600px] overflow-auto p-2">
-          {links.map((link, i) => (
-            <div
-              key={i}
-              className="flex flex-col gap-1 ring-2 ring-foreground p-2 rounded-2xl"
-            >
-              <div className="flex flex-row gap-1 items-center">
-                <Image
-                  src={link[0].sprite}
-                  alt="First Pokemon"
-                  width={100}
-                  height={100}
-                />
-                <p>{link[0].name}</p>
-                <p className="text-slate-500">{link[0].types.join("/")}</p>
-                <Image
-                  src={link[1].sprite}
-                  alt="Second Pokemon"
-                  width={100}
-                  height={100}
-                />
-                <p>{link[1].name}</p>
-                <p className="text-slate-500">{link[1].types.join("/")}</p>
-              </div>
-              <Button
-                className="w-fit"
-                variant={"destructive"}
-                onClick={() => deleteLink(link)}
+        <div className="flex flex-col gap-2 lg:w-1/2">
+          <p>Soullink Box</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 h-[300px] bg-card rounded-3xl w-full overflow-auto no-scrollbar p-2">
+            {links.map((link, i) => (
+              <div
+                key={i}
+                className="flex flex-col justify-between h-25 gap-1 ring-2 ring-foreground p-2 rounded-2xl"
               >
-                Delete Link
-              </Button>
-            </div>
-          ))}
+                <div className="flex flex-row justify-between gap-1 items-center">
+                  <Image
+                    src={link[1].sprite}
+                    alt="First Pokemon"
+                    width={50}
+                    height={50}
+                  />
+                  <div className="flex flex-col gap-2">
+                    <p className="text-[10px]">{link[1].name}</p>
+                    <p className="text-[10px]">{link[2].name}</p>
+                  </div>
+                  <Image
+                    src={link[2].sprite}
+                    alt="Second Pokemon"
+                    width={50}
+                    height={50}
+                  />
+                </div>
+                <div className="flex flex-row gap-2 justify-between">
+                  <Button
+                    size={"sm"}
+                    variant={"destructive"}
+                    onClick={() => deleteLink(link)}
+                  >
+                    Delete
+                  </Button>
+                  {currentTeam.some((l) => l[0] === link[0]) ? (
+                    <Button
+                      size={"sm"}
+                      variant={"default"}
+                      onClick={() => removeLinkFromTeam(link)}
+                    >
+                      Remove
+                    </Button>
+                  ) : (
+                    <Button
+                      size={"sm"}
+                      variant={"default"}
+                      onClick={() => addLinkToTeam(link)}
+                    >
+                      Add
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col lg:flex-row w-full justify-between gap-4">
+        <div className="flex flex-col w-full gap-2">
+          <p>My Team</p>
+          <Team team={currentTeam} user={1} />
+        </div>
+        <div className="flex flex-col w-full gap-2">
+          <p>Friends Team</p>
+          <Team team={currentTeam} user={2} />
         </div>
       </div>
     </div>
