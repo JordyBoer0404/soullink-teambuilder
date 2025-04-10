@@ -30,9 +30,16 @@ type PokemonProps = {
 const Teambuilder = ({ pokemon }: PokemonProps) => {
   const [links, setLinks] = React.useState<[Pokemon, Pokemon][]>([]);
 
+  const [myTeam, setMyTeam] = React.useState<Pokemon[]>([]);
+  const [friendTeam, setFriendTeam] = React.useState<Pokemon[]>([]);
+
   useEffect(() => {
     const savedLinks = JSON.parse(localStorage.getItem("allLinks") || "[]");
+    const myteam = JSON.parse(localStorage.getItem("myTeam") || "[]");
+    const friendteam = JSON.parse(localStorage.getItem("friendTeam") || "[]");
     setLinks(savedLinks);
+    setMyTeam(myteam);
+    setFriendTeam(friendteam);
   }, []);
 
   useEffect(() => {
@@ -40,6 +47,11 @@ const Teambuilder = ({ pokemon }: PokemonProps) => {
       localStorage.setItem("allLinks", JSON.stringify(links));
     }
   }, [links]);
+
+  useEffect(() => {
+    localStorage.setItem("myTeam", JSON.stringify(myTeam));
+    localStorage.setItem("friendTeam", JSON.stringify(friendTeam));
+  }, [myTeam, friendTeam]);
 
   const [open, setOpen] = React.useState(false);
   const [value, setValue] = React.useState<Pokemon | null>(null);
@@ -58,10 +70,47 @@ const Teambuilder = ({ pokemon }: PokemonProps) => {
   function deleteLink(link: [Pokemon, Pokemon]) {
     const newLinks = links.filter((l) => l[0] != link[0] && l[1] != link[1]);
     setLinks(newLinks);
+    removeLinkFromTeam(link);
+  }
+
+  function addLinkToTeam(link: [Pokemon, Pokemon]): void {
+    const myPokemon = link[0];
+    const friendPokemon = link[1];
+
+    if (
+      myTeam.some((p) => p.id === myPokemon.id) ||
+      friendTeam.some((p) => p.id === friendPokemon.id)
+    ) {
+      return;
+    }
+
+    setMyTeam((prevTeam) => {
+      if (prevTeam.length >= 6) {
+        return prevTeam;
+      }
+
+      return [...prevTeam, myPokemon];
+    });
+
+    setFriendTeam((prevTeam) => {
+      if (prevTeam.length >= 6) {
+        return prevTeam;
+      }
+
+      return [...prevTeam, friendPokemon];
+    });
+  }
+
+  function removeLinkFromTeam(link: [Pokemon, Pokemon]): void {
+    const myNewTeam = myTeam.filter((p) => p.id != link[0].id);
+    setMyTeam(myNewTeam);
+
+    const FriendNewTeam = friendTeam.filter((p) => p.id != link[1].id);
+    setFriendTeam(FriendNewTeam);
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-16">
       <div className="flex flex-row justify-between gap-4">
         <div className="flex flex-col gap-2">
           <p>Create Soullink</p>
@@ -177,39 +226,113 @@ const Teambuilder = ({ pokemon }: PokemonProps) => {
           </div>
         </div>
 
-        <div className="flex flex-col gap-2 h-[400px] bg-slate-800 rounded-3xl w-[600px] overflow-auto p-2">
-          {links.map((link, i) => (
-            <div
-              key={i}
-              className="flex flex-col gap-1 ring-2 ring-foreground p-2 rounded-2xl"
-            >
-              <div className="flex flex-row gap-1 items-center">
-                <Image
-                  src={link[0].sprite}
-                  alt="First Pokemon"
-                  width={100}
-                  height={100}
-                />
-                <p>{link[0].name}</p>
-                <p className="text-slate-500">{link[0].types.join("/")}</p>
-                <Image
-                  src={link[1].sprite}
-                  alt="Second Pokemon"
-                  width={100}
-                  height={100}
-                />
-                <p>{link[1].name}</p>
-                <p className="text-slate-500">{link[1].types.join("/")}</p>
-              </div>
-              <Button
-                className="w-fit"
-                variant={"destructive"}
-                onClick={() => deleteLink(link)}
+        <div className="flex flex-col gap-2 w-1/2">
+          <p>Soullink Box</p>
+          <div className="flex flex-col gap-2 h-[400px] bg-card rounded-3xl w-full overflow-auto no-scrollbar p-2">
+            {links.map((link, i) => (
+              <div
+                key={i}
+                className="flex flex-col gap-1 ring-2 ring-foreground p-2 rounded-2xl"
               >
-                Delete Link
-              </Button>
-            </div>
-          ))}
+                <div className="flex flex-row gap-1 items-center">
+                  <Image
+                    src={link[0].sprite}
+                    alt="First Pokemon"
+                    width={100}
+                    height={100}
+                  />
+                  <p>{link[0].name}</p>
+                  <p className="text-slate-500">{link[0].types.join("/")}</p>
+                  <Image
+                    src={link[1].sprite}
+                    alt="Second Pokemon"
+                    width={100}
+                    height={100}
+                  />
+                  <p>{link[1].name}</p>
+                  <p className="text-slate-500">{link[1].types.join("/")}</p>
+                </div>
+                <div className="flex flex-row gap-2">
+                  <Button
+                    className="w-fit"
+                    variant={"destructive"}
+                    onClick={() => deleteLink(link)}
+                  >
+                    Delete Link
+                  </Button>
+                  {myTeam.some((p) => p.id === link[0].id) &&
+                  friendTeam.some((p) => p.id === link[1].id) ? (
+                    <Button
+                      className="w-fit"
+                      variant={"default"}
+                      onClick={() => removeLinkFromTeam(link)}
+                    >
+                      Remove From Team
+                    </Button>
+                  ) : (
+                    <Button
+                      className="w-fit"
+                      variant={"default"}
+                      onClick={() => addLinkToTeam(link)}
+                    >
+                      Add to team
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-row justify-between gap-4">
+        <div className="flex flex-row gap-2">
+          {Array.from({ length: 6 }).map((_, index) =>
+            myTeam[index] ? (
+              <div
+                key={index}
+                className="w-fit h-fit ring-1 ring-foreground p-2 rounded-2xl"
+              >
+                <Image
+                  src={myTeam[index].sprite}
+                  alt="Team Pokemon"
+                  width={100}
+                  height={100}
+                />
+              </div>
+            ) : (
+              <div
+                key={index}
+                className="w-fit h-fit ring-1 ring-foreground p-2 rounded-2xl"
+              >
+                <p>empty</p>
+              </div>
+            )
+          )}
+        </div>
+        <div className="flex flex-row gap-2">
+          {Array.from({ length: 6 }).map((_, index) =>
+            friendTeam[index] ? (
+              <div
+                key={index}
+                className="w-fit h-fit ring-1 ring-foreground p-2 rounded-2xl"
+              >
+                <Image
+                  src={friendTeam[index].sprite}
+                  alt="Friend Team pokemon"
+                  width={100}
+                  height={100}
+                />
+              </div>
+            ) : (
+              <div
+                key={index}
+                className="w-fit h-fit ring-1 ring-foreground p-2 rounded-2xl"
+              >
+                <p>empty</p>
+              </div>
+            )
+          )}
         </div>
       </div>
     </div>
