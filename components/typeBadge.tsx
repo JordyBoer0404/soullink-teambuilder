@@ -4,49 +4,49 @@ const TypeBadge = (props: { type: string }) => {
   const getTypeColor = (type: string) => {
     switch (type.toLowerCase()) {
       case "normal":
-        return "bg-normal border-card/50 text-black";
+        return "bg-normal text-black";
       case "fire":
-        return "bg-fire border-card/50 text-white";
+        return "bg-fire text-white";
       case "water":
-        return "bg-water border-card/50 text-white";
+        return "bg-water text-white";
       case "grass":
-        return "bg-grass border-card/50 text-white";
+        return "bg-grass text-white";
       case "electric":
-        return "bg-electric border-card/50 text-black";
+        return "bg-electric text-black";
       case "ice":
-        return "bg-ice border-card/50 text-black";
+        return "bg-ice text-black";
       case "psychic":
-        return "bg-psychic border-card/50 text-white";
+        return "bg-psychic text-white";
       case "dark":
-        return "bg-dark border-card/50 text-white";
+        return "bg-dark text-white";
       case "fairy":
-        return "bg-fairy border-card/50 text-white";
+        return "bg-fairy text-white";
       case "dragon":
-        return "bg-dragon border-card/50 text-white";
+        return "bg-dragon text-white";
       case "rock":
-        return "bg-rock border-card/50 text-white";
+        return "bg-rock text-white";
       case "ground":
-        return "bg-ground border-card/50 text-white";
+        return "bg-ground text-white";
       case "poison":
-        return "bg-poison border-card/50 text-white";
+        return "bg-poison text-white";
       case "fighting":
-        return "bg-fighting border-card/50 text-white";
+        return "bg-fighting text-white";
       case "bug":
-        return "bg-bug border-card/50 text-black";
+        return "bg-bug text-black";
       case "ghost":
-        return "bg-ghost border-card/50 text-white";
+        return "bg-ghost text-white";
       case "steel":
-        return "bg-steel border-card/50 text-black";
+        return "bg-steel text-black";
       case "flying":
-        return "bg-flying border-card/50 text-black";
+        return "bg-flying text-black";
       default:
-        return "bg-card border-card text-black";
+        return "b text-black";
     }
   };
 
   return (
     <div
-      className={`w-25 rounded-md border-4 border-double text-center p-1 ${getTypeColor(
+      className={`w-25 rounded-md border-4 border-double border-card/50 text-center p-1 ${getTypeColor(
         props.type
       )}`}
     >

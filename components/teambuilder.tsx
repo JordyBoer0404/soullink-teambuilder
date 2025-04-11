@@ -116,6 +116,54 @@ const Teambuilder = ({ pokemon }: PokemonProps) => {
     return duplicates;
   }
 
+  const fromTypeColors: Record<string, string> = {
+    normal: "from-normal",
+    fire: "from-fire",
+    water: "from-water",
+    grass: "from-grass",
+    electric: "from-electric",
+    ice: "from-ice",
+    psychic: "from-psychic",
+    dark: "from-dark",
+    fairy: "from-fairy",
+    dragon: "from-dragon",
+    rock: "from-rock",
+    ground: "from-ground",
+    poison: "from-poison",
+    fighting: "from-fighting",
+    bug: "from-bug",
+    ghost: "from-ghost",
+    steel: "from-steel",
+    flying: "from-flying",
+  };
+
+  const getFromTypeColor = (type: string) =>
+    fromTypeColors[type.toLowerCase()] || "from-card";
+
+  const toTypeColors: Record<string, string> = {
+    normal: "to-normal",
+    fire: "to-fire",
+    water: "to-water",
+    grass: "to-grass",
+    electric: "to-electric",
+    ice: "to-ice",
+    psychic: "to-psychic",
+    dark: "to-dark",
+    fairy: "to-fairy",
+    dragon: "to-dragon",
+    rock: "to-rock",
+    ground: "to-ground",
+    poison: "to-poison",
+    fighting: "to-fighting",
+    bug: "to-bug",
+    ghost: "to-ghost",
+    steel: "to-steel",
+    flying: "to-flying",
+  };
+
+  const getToTypeColor = (type: string) =>
+    toTypeColors[type.toLowerCase()] || "to-card";
+
   return (
     <div className="flex flex-col gap-16">
       <div className="flex flex-col lg:flex-row justify-between gap-4">
@@ -237,7 +285,7 @@ const Teambuilder = ({ pokemon }: PokemonProps) => {
           </div>
           <div className="flex flex-col gap-2">
             <p>Current Primary Types In Teams</p>
-            <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 md:grid-cols-4 place-items-center gap-2 bg-card p-4 rounded-2xl">
               {currentTeam.map((p, i) => (
                 <TypeBadge key={i} type={p[1].types[0]} />
               ))}
@@ -259,25 +307,35 @@ const Teambuilder = ({ pokemon }: PokemonProps) => {
             {links.map((link, i) => (
               <div
                 key={i}
-                className="flex flex-col justify-between h-25 gap-1 ring-2 ring-foreground p-2 rounded-2xl"
+                className={`flex flex-col justify-between h-25 gap-1 border-3 border-card ring ring-foreground ring-offset-1 p-2 rounded-2xl bg-gradient-to-br ${getFromTypeColor(
+                  link[1].types[0]
+                )} from-50% ${getToTypeColor(link[2].types[0])} to-50%`}
               >
                 <div className="flex flex-row justify-between gap-1 items-center">
-                  <Image
-                    src={link[1].sprite}
-                    alt="First Pokemon"
-                    width={50}
-                    height={50}
-                  />
-                  <div className="flex flex-col gap-2">
-                    <p className="text-[10px]">{link[1].name}</p>
-                    <p className="text-[10px]">{link[2].name}</p>
+                  <div>
+                    <Image
+                      src={link[1].sprite}
+                      alt="First Pokemon"
+                      width={50}
+                      height={50}
+                    />
                   </div>
-                  <Image
-                    src={link[2].sprite}
-                    alt="Second Pokemon"
-                    width={50}
-                    height={50}
-                  />
+                  <div className="flex flex-col gap-2">
+                    <p className="text-[10px] text-shadow-md/80">
+                      {link[1].name}
+                    </p>
+                    <p className="text-[10px] text-shadow-md/80">
+                      {link[2].name}
+                    </p>
+                  </div>
+                  <div>
+                    <Image
+                      src={link[2].sprite}
+                      alt="Second Pokemon"
+                      width={50}
+                      height={50}
+                    />
+                  </div>
                 </div>
                 <div className="flex flex-row gap-2 justify-between">
                   <Button
