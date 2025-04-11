@@ -14,7 +14,7 @@ const content = async () => {
 
   try {
     const res = await fetch(
-      "https://pokeapi.co/api/v2/pokemon?limit=300&offset=0"
+      "https://pokeapi.co/api/v2/pokemon?limit=2000&offset=0"
     );
     const data = await res.json();
 
