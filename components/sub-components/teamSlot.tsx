@@ -1,13 +1,7 @@
 import React from "react";
 
 import Image from "next/image";
-
-type Pokemon = {
-  id: number;
-  name: string;
-  types: string[];
-  sprite: string;
-};
+import { Pokemon } from "@/types/pokemon";
 
 type TeamSlotProps = {
   pokemon: Pokemon | null;

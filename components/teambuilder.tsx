@@ -15,17 +15,11 @@ import {
 import { cn } from "@/lib/utils";
 
 import Image from "next/image";
-import Team from "./team";
+import Team from "./sub-components/team";
 
 import { v4 as uuidv4 } from "uuid";
-import TypeBadge from "./typeBadge";
-
-type Pokemon = {
-  id: number;
-  name: string;
-  types: string[];
-  sprite: string;
-};
+import { Pokemon } from "@/types/pokemon";
+import TypeBox from "./sub-components/typeBox";
 
 type PokemonProps = {
   pokemon: Pokemon[];
@@ -37,8 +31,6 @@ const Teambuilder = ({ pokemon }: PokemonProps) => {
   const [currentTeam, setCurrentTeam] = React.useState<
     [string, Pokemon, Pokemon][]
   >([]);
-
-  const duplicateTypes = getDuplicatePrimaryTypes(currentTeam);
 
   useEffect(() => {
     const savedLinks = JSON.parse(localStorage.getItem("allLinks") || "[]");
@@ -95,25 +87,6 @@ const Teambuilder = ({ pokemon }: PokemonProps) => {
   function removeLinkFromTeam(link: [string, Pokemon, Pokemon]): void {
     const myNewTeam = currentTeam.filter((l) => l[0] !== link[0]);
     setCurrentTeam(myNewTeam);
-  }
-
-  function getDuplicatePrimaryTypes(team: [string, Pokemon, Pokemon][]) {
-    const primaryTypes = team.flatMap(([, p1, p2]) => [
-      p1.types[0],
-      p2.types[0],
-    ]);
-
-    const count: Record<string, number> = {};
-
-    for (const type of primaryTypes) {
-      count[type] = (count[type] || 0) + 1;
-    }
-
-    const duplicates = Object.entries(count)
-      .filter(([, num]) => num > 1)
-      .map(([type]) => type);
-
-    return duplicates;
   }
 
   const fromTypeColors: Record<string, string> = {
@@ -285,19 +258,7 @@ const Teambuilder = ({ pokemon }: PokemonProps) => {
           </div>
           <div className="flex flex-col gap-2">
             <p>Current Primary Types In Teams</p>
-            <div className="grid grid-cols-3 md:grid-cols-4 place-items-center gap-2 bg-card p-4 rounded-2xl">
-              {currentTeam.map((p, i) => (
-                <TypeBadge key={i} type={p[1].types[0]} />
-              ))}
-              {currentTeam.map((p, i) => (
-                <TypeBadge key={i} type={p[2].types[0]} />
-              ))}
-            </div>
-            {duplicateTypes.length > 0 && (
-              <p className="text-red-500">
-                Duplicate primary types in team: {duplicateTypes.join(" / ")}
-              </p>
-            )}
+            <TypeBox currentTeam={currentTeam} />
           </div>
         </div>
 
@@ -339,6 +300,7 @@ const Teambuilder = ({ pokemon }: PokemonProps) => {
                 </div>
                 <div className="flex flex-row gap-2 justify-between">
                   <Button
+                    className="shadow-md shadow-card"
                     size={"sm"}
                     variant={"destructive"}
                     onClick={() => deleteLink(link)}
@@ -347,6 +309,7 @@ const Teambuilder = ({ pokemon }: PokemonProps) => {
                   </Button>
                   {currentTeam.some((l) => l[0] === link[0]) ? (
                     <Button
+                      className="shadow-md shadow-card"
                       size={"sm"}
                       variant={"default"}
                       onClick={() => removeLinkFromTeam(link)}
@@ -355,6 +318,7 @@ const Teambuilder = ({ pokemon }: PokemonProps) => {
                     </Button>
                   ) : (
                     <Button
+                      className="shadow-md shadow-card"
                       size={"sm"}
                       variant={"default"}
                       onClick={() => addLinkToTeam(link)}

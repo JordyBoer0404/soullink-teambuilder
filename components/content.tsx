@@ -1,13 +1,7 @@
 import React from "react";
 import Teambuilder from "./teambuilder";
 import Error from "./error";
-
-type Pokemon = {
-  id: number;
-  name: string;
-  types: string[];
-  sprite: string;
-};
+import { Pokemon } from "@/types/pokemon";
 
 const content = async () => {
   let pokemon: Pokemon[] = [];
