@@ -1,12 +1,6 @@
 import React from "react";
 import TeamSlot from "./teamSlot";
-
-type Pokemon = {
-  id: number;
-  name: string;
-  types: string[];
-  sprite: string;
-};
+import { Pokemon } from "@/types/pokemon";
 
 type TeamProps = {
   team: [string, Pokemon, Pokemon][];
